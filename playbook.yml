@@ -1,60 +1,8 @@
 ---
-- hosts: your_server
-  become: yes
-  vars_files:
-    - vars/main.yml
-  tasks:
-    - name: Update and upgrade apt packages
-      apt:
-        update_cache: yes
-        upgrade: 'yes'
-
-    - name: Install necessary packages
-      apt:
-        name: ['apache2', 'mysql-server', 'php', 'php-mysql', 'libapache2-mod-php', 'php-cli', 'wget', 'unzip']
-        state: present
-
-    - name: Download WordPress
-      get_url:
-        url: https://wordpress.org/latest.zip
-        dest: /var/www/html
-
-    - name: Unzip WordPress
-      unarchive:
-        src: /var/www/html/latest.zip
-        dest: /var/www/html/
-        remote_src: yes
-
-    - name: Copy sample config file
-      command: cp /var/www/html/wordpress/wp-config-sample.php /var/www/html/wordpress/wp-config.php
-
-    - name: Update WordPress config file
-      lineinfile:
-        path: /var/www/html/wordpress/wp-config.php
-        regexp: "{{ item.regexp }}"
-        line: "{{ item.line }}"
-      loop:
-        - { regexp: 'database_name_here', line: "define('DB_NAME', '{{ db_name }}');" }
-        - { regexp: 'username_here', line: "define('DB_USER', '{{ db_user }}');" }
-        - { regexp: 'password_here', line: "define('DB_PASSWORD', '{{ db_password }}');" }
-        - { regexp: 'localhost', line: "define('DB_HOST', '{{ db_host }}');" }
-
-    - name: Create MySQL database
-      mysql_db:
-        name: "{{ db_name }}"
-        state: present
-
-    - name: Create MySQL user
-      mysql_user:
-        name: "{{ db_user }}"
-        password: "{{ db_password }}"
-        priv: "{{ db_name }}.*:ALL"
-        host: "%"
-        state: present
-
-        
-    - name: Ensure Apache is running
-      service:
-        name: apache2
-        state: started
-        enabled: yes
+- hosts: all
+  roles:
+    - role: codenamenuke.wordpress
+      vars:
+        my_sql_db: wordpress
+        my_sql_user: wordpress
+        my_sql_password: randompassword
