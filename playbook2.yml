@@ -1,6 +1,6 @@
 ---
 - name: Install and Configure WordPress
-  hosts: web_servers
+  hosts: all
   become: true
   vars:
     mysql_root_password: "your_root_password"
