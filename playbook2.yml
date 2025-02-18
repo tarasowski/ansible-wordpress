@@ -1,0 +1,122 @@
+---
+- name: Deploy WordPress
+  hosts: all
+  become: yes
+  vars:
+    mysql_root_password: "your_mysql_root_password"
+    mysql_db: "wordpress"
+    mysql_user: "wpuser"
+    mysql_password: "wppassword"
+    wp_dir: "/var/www/html/wordpress"
+    wp_url: "https://wordpress.org/latest.tar.gz"
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install required packages
+      apt:
+        name:
+          - apache2
+          - php
+          - php-mysql
+          - libapache2-mod-php
+          - mysql-server
+          - python3-mysqldb
+          - unzip
+        state: present
+
+    - name: Start and enable Apache service
+      service:
+        name: apache2
+        state: started
+        enabled: yes
+
+    - name: Start and enable MySQL service
+      service:
+        name: mysql
+        state: started
+        enabled: yes
+
+    - name: Secure MySQL installation
+      mysql_secure_installation:
+        login_password: "{{ mysql_root_password }}"
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+
+    - name: Create MySQL database for WordPress
+      mysql_db:
+        name: "{{ mysql_db }}"
+        state: present
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+
+    - name: Create MySQL user for WordPress
+      mysql_user:
+        name: "{{ mysql_user }}"
+        password: "{{ mysql_password }}"
+        priv: "{{ mysql_db }}.*:ALL"
+        state: present
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+
+    - name: Download WordPress
+      get_url:
+        url: "{{ wp_url }}"
+        dest: "/tmp/wordpress.tar.gz"
+
+    - name: Extract WordPress
+      unarchive:
+        src: "/tmp/wordpress.tar.gz"
+        dest: "{{ wp_dir }}"
+        remote_src: yes
+        creates: "{{ wp_dir }}/wp-config-sample.php"
+
+    - name: Set permissions for WordPress directory
+      file:
+        path: "{{ wp_dir }}"
+        state: directory
+        mode: '0755'
+        recurse: yes
+
+    - name: Copy WordPress config file
+      copy:
+        src: "{{ wp_dir }}/wp-config-sample.php"
+        dest: "{{ wp_dir }}/wp-config.php"
+        remote_src: yes
+
+    - name: Configure WordPress database settings
+      replace:
+        path: "{{ wp_dir }}/wp-config.php"
+        regexp: "{{ item.regexp }}"
+        replace: "{{ item.replace }}"
+      with_items:
+        - { regexp: 'database_name_here', replace: "{{ mysql_db }}" }
+        - { regexp: 'username_here', replace: "{{ mysql_user }}" }
+        - { regexp: 'password_here', replace: "{{ mysql_password }}" }
+
+    - name: Set Apache as the owner of the WordPress directory
+      file:
+        path: "{{ wp_dir }}"
+        owner: www-data
+        group: www-data
+        recurse: yes
+
+    - name: Configure Apache to serve WordPress
+      blockinfile:
+        path: /etc/apache2/sites-available/000-default.conf
+        block: |
+          <VirtualHost *:80>
+              DocumentRoot {{ wp_dir }}
+              <Directory {{ wp_dir }}>
+                  AllowOverride All
+                  Require all granted
+              </Directory>
+          </VirtualHost>
+      notify: Restart Apache
+
+  handlers:
+    - name: Restart Apache
+      service:
+        name: apache2
+        state: restarted
