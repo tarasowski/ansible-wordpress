@@ -31,14 +31,14 @@
     - name: Update WordPress config file
       lineinfile:
         path: /var/www/html/wordpress/wp-config.php
-        regexp: '{{ item.regexp }}'
-        line: '{{ item.line }}'
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
       loop:
-        - { regexp: 'database_name_here', line: 'define('DB_NAME', '{{ db_name }}');' }
-        - { regexp: 'username_here', line: 'define('DB_USER', '{{ db_user }}');' }
-        - { regexp: 'password_here', line: 'define('DB_PASSWORD', '{{ db_password }}');' }
-        - { regexp: 'localhost', line: 'define('DB_HOST', '{{ db_host }}');' }
-
+        - { regexp: 'database_name_here', line: "define('DB_NAME', '{{ db_name }}');" }
+        - { regexp: 'username_here', line: "define('DB_USER', '{{ db_user }}');" }
+        - { regexp: 'password_here', line: "define('DB_PASSWORD', '{{ db_password }}');" }
+        - { regexp: 'localhost', line: "define('DB_HOST', '{{ db_host }}');" }
+        
     - name: Ensure Apache is running
       service:
         name: apache2
