@@ -35,6 +35,13 @@
           - wget
         state: present
 
+        
+    - name: Install Python MySQL dependencies
+      apt:
+        name: python3-pymysql
+        state: present
+        become: yes
+
     - name: Start and enable Apache and MySQL
       systemd:
         name: "{{ item }}"
