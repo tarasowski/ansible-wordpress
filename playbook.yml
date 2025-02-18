@@ -38,6 +38,20 @@
         - { regexp: 'username_here', line: "define('DB_USER', '{{ db_user }}');" }
         - { regexp: 'password_here', line: "define('DB_PASSWORD', '{{ db_password }}');" }
         - { regexp: 'localhost', line: "define('DB_HOST', '{{ db_host }}');" }
+
+    - name: Create MySQL database
+      mysql_db:
+        name: "{{ db_name }}"
+        state: present
+
+    - name: Create MySQL user
+      mysql_user:
+        name: "{{ db_user }}"
+        password: "{{ db_password }}"
+        priv: "{{ db_name }}.*:ALL"
+        host: "%"
+        state: present
+
         
     - name: Ensure Apache is running
       service:
