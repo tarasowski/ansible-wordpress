@@ -34,7 +34,7 @@
           - curl
           - wget
           - mysqlclient
-          - pymysql
+          - python3-pymysql
         state: present
 
 
